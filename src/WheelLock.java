@@ -1,38 +1,66 @@
+import java.util.Arrays;
+import java.util.HashSet;
+
 public class WheelLock {
 
-    private final CircularLinkedList[] lists;
-
-    public WheelLock(){
-        this.lists = null;
-    }
+    private final LetterWheel[] wheels;
+    private final int[] max;
+    private final EnglishDictionary dict = new EnglishDictionary("resources/dictionary.txt");
 
     public WheelLock(char[]... lists) {
-        this.lists = new CircularLinkedList[lists.length];
-        int index = 0;
-        for(char[] list : lists){
-            this.lists[index++] = new CircularLinkedList(list);
+        this.wheels = new LetterWheel[lists.length];
+        int i = 0;
+        int[] max = new int[lists.length];
+        for (char[] list : lists) {
+            this.wheels[i] = new LetterWheel(list);
+            max[i++] = list.length - 1;
         }
-    }
-
-    public String getCurrentValue() {
-        if (this.lists == null) {
-            return null;
-        }
-        StringBuilder currentValue = new StringBuilder();
-        for(CircularLinkedList list : this.lists){
-            currentValue.append(list.getHeadValue());
-        }
-        return currentValue.toString();
+        this.max = max;
     }
 
     public int getWidth() {
-        if (this.lists == null) return 0;
-        return this.lists.length;
+        return (this.wheels != null ) ? this.wheels.length : 0;
     }
 
-    public void rotateWheel(int index) {
-        if (this.lists != null) {
-            this.lists[index].rotate();
+    public String printCombination(int[] combination) {
+        StringBuilder comboString = new StringBuilder();
+        if (this.wheels == null) {
+            return "Error: Lock is not valid";
         }
+        if (combination.length != getWidth()) {
+            return "Error: Array does not line up with lock.";
+        }
+        for (int x = 0; x < combination.length; ++x) {
+            comboString.append(this.wheels[x].getValueAt(combination[x]));
+        }
+        return comboString.toString();
+    }
+
+    public HashSet<String> getAllCombinations() {
+        HashSet<String> allCombos = new HashSet<>();
+        if (this.wheels == null) {
+            return null;
+        }
+        int[] combo = new int[getWidth()];
+        String currentWord;
+        while (!Arrays.equals(combo, this.max)) {
+            currentWord = printCombination(combo).toUpperCase();
+            if (this.dict.checkDict(currentWord)) {
+                allCombos.add(currentWord);
+            }
+            combo = incrementArr(combo);
+        }
+        return allCombos;
+    }
+
+    private int[] incrementArr(int[] combo) {
+        boolean carrying = true;
+        if (this.max == null) return null;
+        for (int x = combo.length - 1; carrying && x >= 0; --x) {
+            combo[x] += 1;
+            carrying = combo[x] > this.max[x];
+            if (carrying) combo[x] = 0;
+        }
+        return combo;
     }
 }
